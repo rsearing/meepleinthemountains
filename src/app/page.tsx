@@ -57,7 +57,7 @@ export default async function Home() {
           height={193}
           priority
         />
-        <h1>Board Games with Rob</h1>
+        <h1>Events Page</h1>
       </section>
 
       <section className="grid">
