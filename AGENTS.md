@@ -97,6 +97,7 @@ The site manages Board Games with Rob events, including the Meeple in the Mounta
 - 2026-06-25: Removed the homepage dependency on the Supabase service-role key and added `0009_public_event_summaries.sql` so public event cards can show attendee counts and bed availability without exposing attendee rows.
 - 2026-06-25: Replaced the homepage Board Games with Rob logo with the final full-color PNG asset and updated its display dimensions.
 - 2026-06-25: Changed the homepage hero title from Board Games with Rob to Events Page because the brand name is already present in the logo.
+- 2026-06-26: Added `0010_public_brought_games_function.sql` and updated the public homepage to load brought-game titles through a public-safe RPC so logged-out visitors can see Games Being Brought without exposing attendee details.
 
 ## Open Questions
 - None blocking MVP implementation.
@@ -107,6 +108,7 @@ The site manages Board Games with Rob events, including the Meeple in the Mounta
 - Supabase schema and Row Level Security changes are defined in the numbered files under `supabase/migrations`.
 - Run `supabase/migrations/0004_dependents.sql` in the Supabase SQL Editor before testing dependent features.
 - Run `supabase/migrations/0009_public_event_summaries.sql` in the Supabase SQL Editor before expecting public homepage attendee counts and occupied-bed availability in production.
+- Run `supabase/migrations/0010_public_brought_games_function.sql` in the Supabase SQL Editor before expecting public homepage brought-game titles in production.
 - Git is installed and the local repository is initialized. The production GitHub repository is `rsearing/meepleinthemountains`.
 - npm reported two moderate dependency audit findings after install. Do not run forced upgrades without checking for breaking changes.
 - Browser automation could not launch because the bundled Playwright package could not resolve `playwright-core`; use the local browser manually or repair the Playwright runtime for visual QA.

@@ -7,7 +7,6 @@ import type { EventRecord, EventImage } from "@/lib/types";
 type PublicEvent = EventRecord & {
   event_images: EventImage[];
   event_beds: { id: string; capacity: number }[];
-  games_brought: { id: string; title: string; profile_id: string }[];
 };
 
 type EventSummary = {
@@ -15,6 +14,12 @@ type EventSummary = {
   attendee_count: number;
   available_beds: number;
   total_bed_slots: number;
+};
+
+type PublicBroughtGame = {
+  id: string;
+  event_id: string;
+  title: string;
 };
 
 export default async function Home() {
@@ -25,16 +30,20 @@ export default async function Home() {
   const { data: events } = await supabase
     .from("events")
     .select(
-      "id, name, start_date, end_date, location, description, status, event_images(id,event_id,storage_path,alt_text,sort_order), event_beds(id,capacity), games_brought(id,title,profile_id)"
+      "id, name, start_date, end_date, location, description, status, event_images(id,event_id,storage_path,alt_text,sort_order), event_beds(id,capacity)"
     )
     .in("status", visibleStatuses)
     .order("start_date", { ascending: true });
 
   const publicEvents = (events ?? []) as PublicEvent[];
   const eventSummaries = new Map<string, EventSummary>();
+  const publicBroughtGames = new Map<string, PublicBroughtGame[]>();
 
   if (publicEvents.length) {
-    const summariesResult = await supabase.rpc("get_public_event_summaries");
+    const [summariesResult, broughtGamesResult] = await Promise.all([
+      supabase.rpc("get_public_event_summaries"),
+      supabase.rpc("get_public_brought_games")
+    ]);
 
     for (const summary of (summariesResult.data ?? []) as EventSummary[]) {
       eventSummaries.set(summary.event_id, {
@@ -43,6 +52,12 @@ export default async function Home() {
         available_beds: Number(summary.available_beds),
         total_bed_slots: Number(summary.total_bed_slots)
       });
+    }
+
+    for (const game of (broughtGamesResult.data ?? []) as PublicBroughtGame[]) {
+      const games = publicBroughtGames.get(game.event_id) ?? [];
+      games.push(game);
+      publicBroughtGames.set(game.event_id, games);
     }
   }
 
@@ -76,7 +91,9 @@ export default async function Home() {
             const imageUrl = image
               ? supabase.storage.from("event-images").getPublicUrl(image.storage_path).data.publicUrl
               : null;
-            const broughtGames = [...event.games_brought].sort((a, b) => a.title.localeCompare(b.title));
+            const broughtGames = [...(publicBroughtGames.get(event.id) ?? [])].sort((a, b) =>
+              a.title.localeCompare(b.title)
+            );
 
             return (
               <article className="card" key={event.id}>
