@@ -54,7 +54,7 @@ export default async function Home() {
           src="/board-games-with-rob-logo.png"
           alt="Board Games with Rob logo"
           width={250}
-          height={213}
+          height={193}
           priority
         />
         <h1>Board Games with Rob</h1>

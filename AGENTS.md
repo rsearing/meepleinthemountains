@@ -95,6 +95,7 @@ The site manages Board Games with Rob events, including the Meeple in the Mounta
 - 2026-06-25: Prepared the first production publication to the GitHub repository `rsearing/meepleinthemountains`.
 - 2026-06-25: Hardened the public homepage so upcoming events load through the normal public/session-aware Supabase client first, preventing server-only enrichment issues from hiding the event card.
 - 2026-06-25: Removed the homepage dependency on the Supabase service-role key and added `0009_public_event_summaries.sql` so public event cards can show attendee counts and bed availability without exposing attendee rows.
+- 2026-06-25: Replaced the homepage Board Games with Rob logo with the final full-color PNG asset and updated its display dimensions.
 
 ## Open Questions
 - None blocking MVP implementation.
