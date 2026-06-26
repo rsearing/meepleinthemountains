@@ -93,6 +93,7 @@ The site manages Board Games with Rob events, including the Meeple in the Mounta
 - 2026-06-25: Added multi-image galleries for shirt designs. Admins can select multiple images during creation or upload more later, existing single images are migrated automatically, and attendees see every sample image for each design.
 - 2026-06-25: Clarified shirt availability when a catalog design has not been assigned to an event. The attendee page now shows a clear empty state instead of an empty Save form, with a direct assignment link for admins.
 - 2026-06-25: Prepared the first production publication to the GitHub repository `rsearing/meepleinthemountains`.
+- 2026-06-25: Hardened the public homepage so upcoming events load through the normal public/session-aware Supabase client first, preventing server-only enrichment issues from hiding the event card.
 
 ## Open Questions
 - None blocking MVP implementation.
