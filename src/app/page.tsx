@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { getCurrentProfile } from "@/lib/auth";
-import { createAdminClient, createClient } from "@/lib/supabase/server";
-import { availableBedSlots, formatDateRange } from "@/lib/format";
+import { createClient } from "@/lib/supabase/server";
+import { formatDateRange } from "@/lib/format";
 import type { EventRecord, EventImage } from "@/lib/types";
 
 type PublicEvent = EventRecord & {
@@ -10,16 +10,16 @@ type PublicEvent = EventRecord & {
   games_brought: { id: string; title: string; profile_id: string }[];
 };
 
-type EventDetails = {
-  attendees: { id: string; profile_id: string; bed_id: string | null }[];
-  beds: { id: string; capacity: number }[];
-  games: { id: string; title: string; profile_id: string }[];
+type EventSummary = {
+  event_id: string;
+  attendee_count: number;
+  available_beds: number;
+  total_bed_slots: number;
 };
 
 export default async function Home() {
   const profile = await getCurrentProfile();
   const supabase = await createClient();
-  const admin = createAdminClient();
   const visibleStatuses =
     profile?.role === "admin" ? ["draft", "upcoming", "active"] : ["upcoming", "active"];
   const { data: events } = await supabase
@@ -31,21 +31,17 @@ export default async function Home() {
     .order("start_date", { ascending: true });
 
   const publicEvents = (events ?? []) as PublicEvent[];
-  const eventDetails = new Map<string, EventDetails>();
+  const eventSummaries = new Map<string, EventSummary>();
 
   if (publicEvents.length) {
-    const eventIds = publicEvents.map((event) => event.id);
-    const [attendeesResult, bedsResult, gamesResult] = await Promise.all([
-      admin.from("event_attendees").select("id,event_id,profile_id,bed_id").in("event_id", eventIds),
-      admin.from("event_beds").select("id,event_id,capacity").in("event_id", eventIds),
-      admin.from("games_brought").select("id,event_id,title,profile_id").in("event_id", eventIds)
-    ]);
+    const summariesResult = await supabase.rpc("get_public_event_summaries");
 
-    for (const event of publicEvents) {
-      eventDetails.set(event.id, {
-        attendees: (attendeesResult.data ?? []).filter((attendee) => attendee.event_id === event.id),
-        beds: (bedsResult.data ?? []).filter((bed) => bed.event_id === event.id),
-        games: (gamesResult.data ?? []).filter((game) => game.event_id === event.id)
+    for (const summary of (summariesResult.data ?? []) as EventSummary[]) {
+      eventSummaries.set(summary.event_id, {
+        event_id: summary.event_id,
+        attendee_count: Number(summary.attendee_count),
+        available_beds: Number(summary.available_beds),
+        total_bed_slots: Number(summary.total_bed_slots)
       });
     }
   }
@@ -73,20 +69,14 @@ export default async function Home() {
         ) : (
           publicEvents.map((event) => {
             const image = [...event.event_images].sort((a, b) => a.sort_order - b.sort_order)[0];
-            const details = eventDetails.get(event.id);
-            const beds = details?.beds.length ? details.beds : event.event_beds;
-            const attendees = details?.attendees ?? [];
-            const games = details?.games.length ? details.games : event.games_brought;
-            const totalBeds = beds.reduce((sum, bed) => sum + bed.capacity, 0);
-            const assigned = attendees.length;
-            const available = availableBedSlots(beds, attendees);
+            const summary = eventSummaries.get(event.id);
+            const totalBeds = summary?.total_bed_slots ?? event.event_beds.reduce((sum, bed) => sum + bed.capacity, 0);
+            const assigned = summary?.attendee_count ?? 0;
+            const available = summary?.available_beds ?? totalBeds;
             const imageUrl = image
-              ? admin.storage.from("event-images").getPublicUrl(image.storage_path).data.publicUrl
+              ? supabase.storage.from("event-images").getPublicUrl(image.storage_path).data.publicUrl
               : null;
-            const assignedProfileIds = new Set(attendees.map((attendee) => attendee.profile_id));
-            const broughtGames = games
-              .filter((game) => assignedProfileIds.has(game.profile_id))
-              .sort((a, b) => a.title.localeCompare(b.title));
+            const broughtGames = [...event.games_brought].sort((a, b) => a.title.localeCompare(b.title));
 
             return (
               <article className="card" key={event.id}>

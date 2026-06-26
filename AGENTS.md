@@ -94,6 +94,7 @@ The site manages Board Games with Rob events, including the Meeple in the Mounta
 - 2026-06-25: Clarified shirt availability when a catalog design has not been assigned to an event. The attendee page now shows a clear empty state instead of an empty Save form, with a direct assignment link for admins.
 - 2026-06-25: Prepared the first production publication to the GitHub repository `rsearing/meepleinthemountains`.
 - 2026-06-25: Hardened the public homepage so upcoming events load through the normal public/session-aware Supabase client first, preventing server-only enrichment issues from hiding the event card.
+- 2026-06-25: Removed the homepage dependency on the Supabase service-role key and added `0009_public_event_summaries.sql` so public event cards can show attendee counts and bed availability without exposing attendee rows.
 
 ## Open Questions
 - None blocking MVP implementation.
@@ -103,6 +104,7 @@ The site manages Board Games with Rob events, including the Meeple in the Mounta
 - Required local env vars are documented in `.env.example`.
 - Supabase schema and Row Level Security changes are defined in the numbered files under `supabase/migrations`.
 - Run `supabase/migrations/0004_dependents.sql` in the Supabase SQL Editor before testing dependent features.
+- Run `supabase/migrations/0009_public_event_summaries.sql` in the Supabase SQL Editor before expecting public homepage attendee counts and occupied-bed availability in production.
 - Git is installed and the local repository is initialized. The production GitHub repository is `rsearing/meepleinthemountains`.
 - npm reported two moderate dependency audit findings after install. Do not run forced upgrades without checking for breaking changes.
 - Browser automation could not launch because the bundled Playwright package could not resolve `playwright-core`; use the local browser manually or repair the Playwright runtime for visual QA.
