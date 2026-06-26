@@ -499,6 +499,15 @@ th {
   width: 100%;
 }
 
+.shirt-image-edit {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.shirt-image-edit .button {
+  width: 100%;
+}
+
 .shirt-image-placeholder {
   align-items: center;
   display: flex;

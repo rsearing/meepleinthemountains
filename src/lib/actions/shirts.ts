@@ -103,6 +103,113 @@ export async function addShirtDesignImages(formData: FormData) {
   revalidatePath("/admin/shirts");
   redirect("/admin/shirts?saved=images");
 }
+
+export async function updateShirtDesign(formData: FormData) {
+  await requireAdmin();
+  const admin = createAdminClient();
+  const design_id = String(formData.get("design_id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const sizes = parseSizes(formData.get("sizes"));
+
+  if (!design_id || !name || !sizes.length) {
+    redirect(`/admin/shirts?error=${encodeURIComponent("Enter a design name and at least one size/price line.")}`);
+  }
+
+  const { error: designError } = await admin
+    .from("shirt_designs")
+    .update({ name, description })
+    .eq("id", design_id);
+  if (designError) redirect(`/admin/shirts?error=${encodeURIComponent(designError.message)}`);
+
+  const { data: existingSizes, error: existingError } = await admin
+    .from("shirt_design_sizes")
+    .select("id,size_label")
+    .eq("design_id", design_id);
+  if (existingError) redirect(`/admin/shirts?error=${encodeURIComponent(existingError.message)}`);
+
+  const activeLabels = new Set(sizes.map((size) => size.size_label));
+  for (const size of sizes) {
+    const current = (existingSizes ?? []).find((row) => row.size_label === size.size_label);
+    if (current) {
+      const { error } = await admin
+        .from("shirt_design_sizes")
+        .update({ price_cents: size.price_cents, sort_order: size.sort_order, active: true })
+        .eq("id", current.id);
+      if (error) redirect(`/admin/shirts?error=${encodeURIComponent(error.message)}`);
+    } else {
+      const { error } = await admin
+        .from("shirt_design_sizes")
+        .insert({ ...size, design_id, active: true });
+      if (error) redirect(`/admin/shirts?error=${encodeURIComponent(error.message)}`);
+    }
+  }
+
+  const inactiveIds = (existingSizes ?? [])
+    .filter((row) => !activeLabels.has(row.size_label))
+    .map((row) => row.id);
+  if (inactiveIds.length) {
+    const { error } = await admin
+      .from("shirt_design_sizes")
+      .update({ active: false })
+      .in("id", inactiveIds);
+    if (error) redirect(`/admin/shirts?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/admin/shirts");
+  redirect("/admin/shirts?saved=updated");
+}
+
+export async function deleteShirtDesignImage(formData: FormData) {
+  await requireAdmin();
+  const image_id = String(formData.get("image_id") ?? "");
+  const admin = createAdminClient();
+  const { data: image, error: imageError } = await admin
+    .from("shirt_design_images")
+    .select("id,storage_path")
+    .eq("id", image_id)
+    .maybeSingle();
+  if (imageError || !image) {
+    redirect(`/admin/shirts?error=${encodeURIComponent(imageError?.message ?? "Image not found.")}`);
+  }
+
+  const { error: storageError } = await admin.storage.from("shirt-images").remove([image.storage_path]);
+  if (storageError) redirect(`/admin/shirts?error=${encodeURIComponent(storageError.message)}`);
+
+  const { error } = await admin.from("shirt_design_images").delete().eq("id", image.id);
+  if (error) redirect(`/admin/shirts?error=${encodeURIComponent(error.message)}`);
+
+  revalidatePath("/admin/shirts");
+  redirect("/admin/shirts?saved=image-deleted");
+}
+
+export async function deleteShirtDesign(formData: FormData) {
+  await requireAdmin();
+  const design_id = String(formData.get("design_id") ?? "");
+  const confirmDelete = formData.get("confirm_delete") === "on";
+  if (!design_id || !confirmDelete) {
+    redirect(`/admin/shirts?error=${encodeURIComponent("Confirm deletion before deleting a shirt design.")}`);
+  }
+
+  const admin = createAdminClient();
+  const { data: images, error: imagesError } = await admin
+    .from("shirt_design_images")
+    .select("storage_path")
+    .eq("design_id", design_id);
+  if (imagesError) redirect(`/admin/shirts?error=${encodeURIComponent(imagesError.message)}`);
+
+  const paths = (images ?? []).map((image) => image.storage_path);
+  if (paths.length) {
+    const { error } = await admin.storage.from("shirt-images").remove(paths);
+    if (error) redirect(`/admin/shirts?error=${encodeURIComponent(error.message)}`);
+  }
+
+  const { error } = await admin.from("shirt_designs").delete().eq("id", design_id);
+  if (error) redirect(`/admin/shirts?error=${encodeURIComponent(error.message)}`);
+
+  revalidatePath("/admin/shirts");
+  redirect("/admin/shirts?saved=deleted");
+}
 export async function assignShirtDesign(formData: FormData) {
   await requireAdmin();
   const event_id = String(formData.get("event_id") ?? "");

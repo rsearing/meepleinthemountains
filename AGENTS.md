@@ -98,6 +98,7 @@ The site manages Board Games with Rob events, including the Meeple in the Mounta
 - 2026-06-25: Replaced the homepage Board Games with Rob logo with the final full-color PNG asset and updated its display dimensions.
 - 2026-06-25: Changed the homepage hero title from Board Games with Rob to Events Page because the brand name is already present in the logo.
 - 2026-06-26: Added `0010_public_brought_games_function.sql` and updated the public homepage to load brought-game titles through a public-safe RPC so logged-out visitors can see Games Being Brought without exposing attendee details.
+- 2026-06-26: Added admin shirt design editing, individual sample image deletion, image uploads, and confirmed whole-design deletion from the Shirt Designs page.
 
 ## Open Questions
 - None blocking MVP implementation.
