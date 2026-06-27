@@ -235,12 +235,21 @@ export async function saveShirtOrders(formData: FormData) {
   const current = await requireProfile();
   const event_id = String(formData.get("event_id") ?? "");
   const profile_id = String(formData.get("profile_id") ?? current.id);
+  const optedOut = formData.get("shirt_opted_out") === "on";
   const admin = createAdminClient();
   const { data: target } = await admin.from("profiles").select("id,owner_profile_id").eq("id", profile_id).maybeSingle();
   if (!target || (current.role !== "admin" && target.id !== current.id && target.owner_profile_id !== current.id)) {
     redirect(`/events/${event_id}/shirts?error=${encodeURIComponent("You cannot manage that shirt order.")}`);
   }
-  const { data: assigned } = await admin.from("event_attendees").select("id").eq("event_id", event_id).eq("profile_id", profile_id).maybeSingle();
+  const { data: assigned, error: assignmentError } = await admin
+    .from("event_attendees")
+    .select("id,shirt_opted_out")
+    .eq("event_id", event_id)
+    .eq("profile_id", profile_id)
+    .maybeSingle();
+  if (assignmentError) {
+    redirect(`/events/${event_id}/shirts?error=${encodeURIComponent(assignmentError.message)}`);
+  }
   if (!assigned) redirect(`/events/${event_id}/shirts?error=${encodeURIComponent("That person is not assigned to this event.")}`);
 
   const { data: eventDesigns } = await admin.from("event_shirt_designs")
@@ -250,15 +259,37 @@ export async function saveShirtOrders(formData: FormData) {
     ? await admin.from("shirt_design_sizes").select("id").in("design_id", designIds).eq("active", true)
     : { data: [] };
   const allowed = new Set((eventSizes ?? []).map((size) => size.id));
-  await admin.from("shirt_orders").delete().eq("event_id", event_id).eq("profile_id", profile_id);
   const orders = formData.getAll("quantity").map((value) => String(value)).map((value) => {
     const [design_size_id, quantityText] = value.split("|");
     return { design_size_id, quantity: Number(quantityText) };
   }).filter((row) => allowed.has(row.design_size_id) && Number.isInteger(row.quantity) && row.quantity > 0);
-  if (orders.length) {
+
+  if (!optedOut && orders.length === 0) {
+    redirect(`/events/${event_id}/shirts?error=${encodeURIComponent("Choose at least one shirt or select that you do not wish to purchase a T-shirt.")}`);
+  }
+
+  const { error: deleteError } = await admin
+    .from("shirt_orders")
+    .delete()
+    .eq("event_id", event_id)
+    .eq("profile_id", profile_id);
+  if (deleteError) redirect(`/events/${event_id}/shirts?error=${encodeURIComponent(deleteError.message)}`);
+
+  if (!optedOut && orders.length) {
     const { error } = await admin.from("shirt_orders").insert(orders.map((row) => ({ ...row, event_id, profile_id })));
     if (error) redirect(`/events/${event_id}/shirts?error=${encodeURIComponent(error.message)}`);
   }
+
+  const { error: responseError } = await admin
+    .from("event_attendees")
+    .update({
+      shirt_opted_out: optedOut,
+      shirt_choice_updated_at: new Date().toISOString()
+    })
+    .eq("event_id", event_id)
+    .eq("profile_id", profile_id);
+  if (responseError) redirect(`/events/${event_id}/shirts?error=${encodeURIComponent(responseError.message)}`);
+
   revalidatePath(`/events/${event_id}/shirts`);
   revalidatePath(`/admin/events/${event_id}/shirts`);
   redirect(`/events/${event_id}/shirts?saved=order`);

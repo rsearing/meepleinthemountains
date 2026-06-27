@@ -526,6 +526,19 @@ th {
   gap: 0.35rem;
 }
 
+.shirt-opt-out {
+  background: #f3f7f5;
+  border: 1px solid #b8cec5;
+  border-radius: 6px;
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+}
+
+.shirt-opt-out p {
+  margin: 0;
+}
+
 .image-management-item {
   align-content: start;
   display: grid;

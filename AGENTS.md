@@ -100,6 +100,7 @@ The site manages Board Games with Rob events, including the Meeple in the Mounta
 - 2026-06-26: Added `0010_public_brought_games_function.sql` and updated the public homepage to load brought-game titles through a public-safe RPC so logged-out visitors can see Games Being Brought without exposing attendee details.
 - 2026-06-26: Added admin shirt design editing, individual sample image deletion, image uploads, and confirmed whole-design deletion from the Shirt Designs page.
 - 2026-06-27: Moved the attendee Change Password form and its success/error flow from My Events to My Account.
+- 2026-06-27: Added an explicit event shirt opt-out choice and admin response tracking so shirt reports distinguish Ordered, Declined, and No response.
 
 ## Open Questions
 - None blocking MVP implementation.
@@ -111,6 +112,7 @@ The site manages Board Games with Rob events, including the Meeple in the Mounta
 - Run `supabase/migrations/0004_dependents.sql` in the Supabase SQL Editor before testing dependent features.
 - Run `supabase/migrations/0009_public_event_summaries.sql` in the Supabase SQL Editor before expecting public homepage attendee counts and occupied-bed availability in production.
 - Run `supabase/migrations/0010_public_brought_games_function.sql` in the Supabase SQL Editor before expecting public homepage brought-game titles in production.
+- Run `supabase/migrations/0011_shirt_opt_out.sql` in the Supabase SQL Editor before using the explicit T-shirt opt-out and response-status feature.
 - Git is installed and the local repository is initialized. The production GitHub repository is `rsearing/meepleinthemountains`.
 - npm reported two moderate dependency audit findings after install. Do not run forced upgrades without checking for breaking changes.
 - Browser automation could not launch because the bundled Playwright package could not resolve `playwright-core`; use the local browser manually or repair the Playwright runtime for visual QA.
