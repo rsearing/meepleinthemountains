@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { saveShirtOrders } from "@/lib/actions/shirts";
+import { ShirtOrderForm, type ShirtOrderDesign } from "@/components/shirt-order-form";
 import { requireProfile } from "@/lib/auth";
 import { fullName } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/server";
@@ -73,6 +73,31 @@ export default async function EventShirtOrderPage({
 
   const people = (requestedProfile ? [requestedProfile] : [profile, ...(deps ?? [])]) as ShirtPerson[];
   const availableDesigns = designRows ?? [];
+  const shirtOrderDesigns: ShirtOrderDesign[] = availableDesigns.map((row) => {
+    const design = row.shirt_designs as unknown as ShirtDesign;
+    const images = [...(design.shirt_design_images ?? [])].sort(
+      (first, second) => first.sort_order - second.sort_order
+    );
+
+    return {
+      id: design.id,
+      name: design.name,
+      description: design.description,
+      images: images.map((image, index) => ({
+        id: image.id,
+        url: admin.storage.from("shirt-images").getPublicUrl(image.storage_path).data.publicUrl,
+        alt: `${design.name} sample ${index + 1}`
+      })),
+      sizes: design.shirt_design_sizes
+        .filter((size) => size.active)
+        .sort((first, second) => first.sort_order - second.sort_order)
+        .map((size) => ({
+          id: size.id,
+          label: size.size_label,
+          priceCents: size.price_cents
+        }))
+    };
+  });
 
   return (
     <section className="grid">
@@ -95,78 +120,27 @@ export default async function EventShirtOrderPage({
       ) : (
         people.map((person) => {
           const shirtChoice = (shirtChoices ?? []).find((choice) => choice.profile_id === person.id);
+          const initialQuantities = Object.fromEntries(
+            shirtOrderDesigns.flatMap((design) =>
+              design.sizes.map((size) => [
+                size.id,
+                (orders ?? []).find(
+                  (order) => order.profile_id === person.id && order.design_size_id === size.id
+                )?.quantity ?? 0
+              ])
+            )
+          );
 
           return (
-            <form className="panel form" action={saveShirtOrders} key={person.id}>
-              <input type="hidden" name="event_id" value={eventId} />
-              <input type="hidden" name="profile_id" value={person.id} />
-              <h2>{fullName(person)}</h2>
-              {availableDesigns.map((row) => {
-                const design = row.shirt_designs as unknown as ShirtDesign;
-                const images = [...(design.shirt_design_images ?? [])].sort(
-                  (first, second) => first.sort_order - second.sort_order
-                );
-
-                return (
-                  <div className="shirt-order-design" key={design.id}>
-                    {images.length ? (
-                      <div className="shirt-image-gallery">
-                        {images.map((image, index) => (
-                          <img
-                            className="shirt-image"
-                            src={admin.storage.from("shirt-images").getPublicUrl(image.storage_path).data.publicUrl}
-                            alt={`${design.name} sample ${index + 1}`}
-                            key={image.id}
-                          />
-                        ))}
-                      </div>
-                    ) : null}
-                    <div>
-                      <h3>{design.name}</h3>
-                      <p>{design.description}</p>
-                      <div className="shirt-size-grid">
-                        {design.shirt_design_sizes
-                          .filter((size) => size.active)
-                          .sort((first, second) => first.sort_order - second.sort_order)
-                          .map((size) => {
-                            const existing =
-                              (orders ?? []).find(
-                                (order) => order.profile_id === person.id && order.design_size_id === size.id
-                              )?.quantity ?? 0;
-                            return (
-                              <label key={size.id}>
-                                {size.size_label} (${(size.price_cents / 100).toFixed(2)})
-                                <select name="quantity" defaultValue={`${size.id}|${existing}`}>
-                                  {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((quantity) => (
-                                    <option key={quantity} value={`${size.id}|${quantity}`}>
-                                      {quantity}
-                                    </option>
-                                  ))}
-                                </select>
-                              </label>
-                            );
-                          })}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              <div className="shirt-opt-out">
-                <label className="checkbox-field" htmlFor={`shirt-opt-out-${person.id}`}>
-                  <input
-                    id={`shirt-opt-out-${person.id}`}
-                    name="shirt_opted_out"
-                    type="checkbox"
-                    defaultChecked={shirtChoice?.shirt_opted_out ?? false}
-                  />
-                  I do not wish to purchase a T-shirt
-                </label>
-                <p className="muted">Selecting this option will clear any saved shirt quantities for this person.</p>
-              </div>
-              <button className="button" type="submit">
-                Save shirt choices
-              </button>
-            </form>
+            <ShirtOrderForm
+              eventId={eventId}
+              profileId={person.id}
+              personName={fullName(person)}
+              designs={shirtOrderDesigns}
+              initialQuantities={initialQuantities}
+              initiallyOptedOut={shirtChoice?.shirt_opted_out ?? false}
+              key={person.id}
+            />
           );
         })
       )}
