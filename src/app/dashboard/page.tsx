@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { updatePassword } from "@/lib/actions/auth";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateRange } from "@/lib/format";
@@ -24,15 +23,8 @@ type DependentBedRow = {
   profiles: { id: string; first_name: string; last_name: string } | null;
 };
 
-export default async function DashboardPage({
-  searchParams
-}: {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-}) {
+export default async function DashboardPage() {
   const profile = await requireProfile();
-  const params = (await searchParams) ?? {};
-  const saved = typeof params.saved === "string" ? params.saved : null;
-  const error = typeof params.error === "string" ? params.error : null;
   const supabase = await createClient();
   const [{ data }, { data: dependentData }] = await Promise.all([
     supabase
@@ -59,9 +51,6 @@ export default async function DashboardPage({
         <h1>My Events</h1>
         <p>Welcome, {profile.first_name}. Choose an event to see attendees and manage game lists.</p>
       </div>
-      {saved ? <div className="notice">Saved successfully.</div> : null}
-      {error ? <div className="error">{error}</div> : null}
-
       <div className="panel account-prompt">
         <div>
           <h2>My Preferences</h2>
@@ -116,16 +105,6 @@ export default async function DashboardPage({
         )}
       </div>
 
-      <form className="panel form" action={updatePassword}>
-        <h2>Change Password</h2>
-        <div className="field">
-          <label htmlFor="password">New password</label>
-          <input id="password" name="password" type="password" minLength={6} required />
-        </div>
-        <button className="button" type="submit">
-          Update password
-        </button>
-      </form>
     </section>
   );
 }

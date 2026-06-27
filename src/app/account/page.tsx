@@ -1,4 +1,5 @@
 import { createDependent, deleteDependent, updateDependent, updateOwnProfile } from "@/lib/actions/attendee";
+import { updatePassword } from "@/lib/actions/auth";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/types";
@@ -25,7 +26,11 @@ export default async function AccountPage({
         <h1>My Account</h1>
         <p>Update the contact information used for event planning.</p>
       </div>
-      {saved ? <div className="notice">Account updated successfully.</div> : null}
+      {saved ? (
+        <div className="notice">
+          {saved === "password" ? "Password updated successfully." : "Account updated successfully."}
+        </div>
+      ) : null}
       {error ? <div className="error">{error}</div> : null}
       <form className="panel form" action={updateOwnProfile}>
         <div className="grid two">
@@ -110,6 +115,24 @@ export default async function AccountPage({
         </div>
         <button className="button" type="submit">
           Save account
+        </button>
+      </form>
+
+      <form className="panel form" action={updatePassword}>
+        <h2>Change Password</h2>
+        <div className="field">
+          <label htmlFor="new-password">New password</label>
+          <input
+            id="new-password"
+            name="password"
+            type="password"
+            minLength={6}
+            autoComplete="new-password"
+            required
+          />
+        </div>
+        <button className="button" type="submit">
+          Update password
         </button>
       </form>
 

@@ -28,8 +28,8 @@ export async function updatePassword(formData: FormData) {
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    redirect(`/dashboard?error=${encodeURIComponent(error.message)}`);
+    redirect(`/account?error=${encodeURIComponent(error.message)}`);
   }
 
-  redirect("/dashboard?saved=password");
+  redirect("/account?saved=password");
 }
