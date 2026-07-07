@@ -102,6 +102,7 @@ The site manages Board Games with Rob events, including the Meeple in the Mounta
 - 2026-06-27: Moved the attendee Change Password form and its success/error flow from My Events to My Account.
 - 2026-06-27: Added an explicit event shirt opt-out choice and admin response tracking so shirt reports distinguish Ordered, Declined, and No response.
 - 2026-06-27: Made shirt opt-out interactive: selecting it immediately resets all quantities to zero, and quantity selections are blocked with a warning until the opt-out is cleared.
+- 2026-07-07: Reworked the event Planning Report into four missing-response sections with email reminder draft buttons, followed by copy-friendly food, snack, and allergy lists for shopping and retreat planning.
 
 ## Open Questions
 - None blocking MVP implementation.

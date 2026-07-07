@@ -672,6 +672,24 @@ th {
   align-items: start;
 }
 
+.report-section-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.report-section-header h2,
+.report-section-header p {
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+.report-section-header .button {
+  flex: 0 0 auto;
+}
+
 .user-dialog {
   max-height: 92vh;
   max-width: 900px;
@@ -790,6 +808,11 @@ details.panel summary {
   }
 
   .account-prompt {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .report-section-header {
     align-items: stretch;
     flex-direction: column;
   }
