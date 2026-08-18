@@ -242,6 +242,7 @@ export async function updateProfile(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
   const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
   const admin = createAdminClient();
   const { data: existingProfile } = await admin
     .from("profiles")
@@ -253,10 +254,17 @@ export async function updateProfile(formData: FormData) {
     redirect(`/admin/users?error=${encodeURIComponent("Profile not found.")}`);
   }
 
+  if (password && password.length < 6) {
+    redirect(`/admin/users?edit=${encodeURIComponent(id)}&error=${encodeURIComponent("The new password must be at least 6 characters.")}#edit-user-title`);
+  }
+
   if (existingProfile.auth_user_id) {
-    const { error: authError } = await admin.auth.admin.updateUserById(existingProfile.auth_user_id, { email });
+    const { error: authError } = await admin.auth.admin.updateUserById(existingProfile.auth_user_id, {
+      email,
+      ...(password ? { password } : {})
+    });
     if (authError) {
-      redirect(`/admin/users?error=${encodeURIComponent(authError.message)}`);
+      redirect(`/admin/users?edit=${encodeURIComponent(id)}&error=${encodeURIComponent(authError.message)}#edit-user-title`);
     }
   }
 

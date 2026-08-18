@@ -118,6 +118,22 @@ export function AdminUserList({
                   <input id="edit-phone" name="phone" type="tel" defaultValue={selectedProfile.phone ?? ""} />
                 </div>
               </div>
+              {selectedProfile.auth_user_id ? (
+                <div className="field">
+                  <label htmlFor="edit-password">New password (optional)</label>
+                  <input
+                    id="edit-password"
+                    name="password"
+                    type="password"
+                    minLength={6}
+                    autoComplete="new-password"
+                    aria-describedby="edit-password-help"
+                  />
+                  <p id="edit-password-help" className="muted">
+                    Enter at least 6 characters to replace this user&apos;s password, or leave blank to keep it unchanged.
+                  </p>
+                </div>
+              ) : null}
               <div className="field">
                 <label htmlFor="edit-shirt-size">T-shirt size</label>
                 <select
