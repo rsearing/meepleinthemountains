@@ -47,6 +47,10 @@ export default async function EventShirtsPage({
       .eq("event_id", eventId)
   ]);
   const assignedIds = new Set((assigned ?? []).map((row) => row.design_id));
+  const attendeeProfiles = (attendees ?? [])
+    .map((row) => row.profiles as unknown as AttendeeProfile | null)
+    .filter((profile): profile is AttendeeProfile => Boolean(profile));
+  const profilesById = new Map(attendeeProfiles.map((profile) => [profile.id, profile]));
   const total = (orders ?? []).reduce(
     (sum, row) =>
       sum + row.quantity * ((row.shirt_design_sizes as unknown as { price_cents: number })?.price_cents ?? 0),
@@ -106,6 +110,7 @@ export default async function EventShirtsPage({
           <thead>
             <tr>
               <th>Person</th>
+              <th>Account type</th>
               <th>Status</th>
               <th>Action</th>
             </tr>
@@ -127,6 +132,7 @@ export default async function EventShirtsPage({
               return (
                 <tr key={row.profile_id}>
                   <td>{person ? fullName(person) : "Unknown"}</td>
+                  <td>{person ? accountTypeLabel(person, profilesById) : "Unknown"}</td>
                   <td>
                     <strong>{status}</strong>
                   </td>
@@ -151,6 +157,7 @@ export default async function EventShirtsPage({
           <thead>
             <tr>
               <th>Person</th>
+              <th>Account type</th>
               <th>Design</th>
               <th>Size</th>
               <th>Qty</th>
@@ -166,6 +173,7 @@ export default async function EventShirtsPage({
               return (
                 <tr key={order.id}>
                   <td>{person ? fullName(person) : "Unknown"}</td>
+                  <td>{person ? accountTypeLabel(person, profilesById) : "Unknown"}</td>
                   <td>{size?.shirt_designs?.name}</td>
                   <td>{size?.size_label}</td>
                   <td>{order.quantity}</td>
@@ -183,4 +191,13 @@ export default async function EventShirtsPage({
       </div>
     </section>
   );
+}
+
+function accountTypeLabel(person: AttendeeProfile, profilesById: Map<string, AttendeeProfile>) {
+  if (!person.owner_profile_id) {
+    return "Primary";
+  }
+
+  const owner = profilesById.get(person.owner_profile_id);
+  return owner ? `Dependent of ${fullName(owner)}` : "Dependent";
 }
