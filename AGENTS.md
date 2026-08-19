@@ -104,6 +104,7 @@ The site manages Board Games with Rob events, including the Meeple in the Mounta
 - 2026-06-27: Made shirt opt-out interactive: selecting it immediately resets all quantities to zero, and quantity selections are blocked with a warning until the opt-out is cleared.
 - 2026-07-07: Reworked the event Planning Report into four missing-response sections with email reminder draft buttons, followed by copy-friendly food, snack, and allergy lists for shopping and retreat planning.
 - 2026-08-17: Added an optional admin-only manual password change field to the Edit User dialog for login accounts. Blank values preserve the existing password; entered passwords require at least six characters and are updated through Supabase Auth.
+- 2026-08-18: Added secure admin user impersonation from Admin Users. Admins can enter an attendee-facing view, make household changes such as shirt orders, and exit through a persistent banner without replacing the administrator's real login session. Password changes are disabled while impersonating.
 
 ## Open Questions
 - None blocking MVP implementation.

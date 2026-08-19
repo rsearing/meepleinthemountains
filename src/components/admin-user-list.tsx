@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { convertDependentToAccount, deleteDependentAsAdmin, updateProfile } from "@/lib/actions/admin";
+import { startImpersonating } from "@/lib/actions/impersonation";
 import { fullName } from "@/lib/format";
 import type { Profile } from "@/lib/types";
 
@@ -52,9 +53,19 @@ export function AdminUserList({
                       : "Login account"}
                   </td>
                   <td>
-                    <Link className="button secondary" href={`/admin/users?edit=${profile.id}#edit-user-title`}>
-                      Edit
-                    </Link>
+                    <div className="actions">
+                      <Link className="button secondary" href={`/admin/users?edit=${profile.id}#edit-user-title`}>
+                        Edit
+                      </Link>
+                      {profile.role === "attendee" && !profile.owner_profile_id && profile.auth_user_id ? (
+                        <form action={startImpersonating}>
+                          <input type="hidden" name="profile_id" value={profile.id} />
+                          <button className="button secondary" type="submit">
+                            View as user
+                          </button>
+                        </form>
+                      ) : null}
+                    </div>
                   </td>
                 </tr>
               ))

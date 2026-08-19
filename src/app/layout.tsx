@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { logout } from "@/lib/actions/auth";
-import { getCurrentProfile } from "@/lib/auth";
+import { stopImpersonating } from "@/lib/actions/impersonation";
+import { getAuthContext } from "@/lib/auth";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,7 +15,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const profile = await getCurrentProfile();
+  const { authenticatedProfile, profile, isImpersonating } = await getAuthContext();
 
   return (
     <html lang="en">
@@ -30,7 +31,7 @@ export default async function RootLayout({
                 <>
                   <Link href="/dashboard">My Events</Link>
                   <Link href="/account">My Account</Link>
-                  {profile.role === "admin" ? <Link href="/admin">Admin</Link> : null}
+                  {authenticatedProfile?.role === "admin" ? <Link href="/admin">Admin</Link> : null}
                   <form action={logout}>
                     <button className="link-button" type="submit">
                       Log out
@@ -42,6 +43,16 @@ export default async function RootLayout({
               )}
             </nav>
           </header>
+          {isImpersonating && profile ? (
+            <div className="impersonation-banner" role="status">
+              <span>
+                Viewing and making changes as <strong>{profile.first_name} {profile.last_name}</strong>
+              </span>
+              <form action={stopImpersonating}>
+                <button className="button secondary" type="submit">Exit user view</button>
+              </form>
+            </div>
+          ) : null}
           <main className="main">{children}</main>
         </div>
       </body>

@@ -1,6 +1,6 @@
 import { createDependent, deleteDependent, updateDependent, updateOwnProfile } from "@/lib/actions/attendee";
 import { updatePassword } from "@/lib/actions/auth";
-import { requireProfile } from "@/lib/auth";
+import { getAuthContext, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/types";
 
@@ -10,6 +10,7 @@ export default async function AccountPage({
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const profile = await requireProfile();
+  const { isImpersonating } = await getAuthContext();
   const params = (await searchParams) ?? {};
   const saved = typeof params.saved === "string" ? params.saved : null;
   const error = typeof params.error === "string" ? params.error : null;
@@ -118,23 +119,25 @@ export default async function AccountPage({
         </button>
       </form>
 
-      <form className="panel form" action={updatePassword}>
-        <h2>Change Password</h2>
-        <div className="field">
-          <label htmlFor="new-password">New password</label>
-          <input
-            id="new-password"
-            name="password"
-            type="password"
-            minLength={6}
-            autoComplete="new-password"
-            required
-          />
-        </div>
-        <button className="button" type="submit">
-          Update password
-        </button>
-      </form>
+      {!isImpersonating ? (
+        <form className="panel form" action={updatePassword}>
+          <h2>Change Password</h2>
+          <div className="field">
+            <label htmlFor="new-password">New password</label>
+            <input
+              id="new-password"
+              name="password"
+              type="password"
+              minLength={6}
+              autoComplete="new-password"
+              required
+            />
+          </div>
+          <button className="button" type="submit">
+            Update password
+          </button>
+        </form>
+      ) : null}
 
       {profile.role === "attendee" ? (
         <>
