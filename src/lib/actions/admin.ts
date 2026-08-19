@@ -238,6 +238,57 @@ export async function deleteDependentAsAdmin(formData: FormData) {
   redirect("/admin/users?saved=dependent-removed");
 }
 
+export async function deleteUserAsAdmin(formData: FormData) {
+  const currentAdmin = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const confirmed = formData.get("confirm_delete") === "yes";
+  const admin = createAdminClient();
+
+  if (!confirmed) {
+    redirect(`/admin/users?edit=${encodeURIComponent(id)}&error=${encodeURIComponent("Confirm that you want to permanently delete this user.")}#edit-user-title`);
+  }
+
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("id,auth_user_id,owner_profile_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!profile) {
+    redirect(`/admin/users?error=${encodeURIComponent("User not found.")}`);
+  }
+
+  if (profile.id === currentAdmin.id) {
+    redirect(`/admin/users?edit=${encodeURIComponent(id)}&error=${encodeURIComponent("You cannot delete your own administrator account.")}#edit-user-title`);
+  }
+
+  if (profile.owner_profile_id || !profile.auth_user_id) {
+    redirect(`/admin/users?edit=${encodeURIComponent(id)}&error=${encodeURIComponent("Use Remove dependent for dependent profiles.")}#edit-user-title`);
+  }
+
+  const { count: dependentCount, error: dependentError } = await admin
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("owner_profile_id", id);
+
+  if (dependentError) {
+    redirect(`/admin/users?edit=${encodeURIComponent(id)}&error=${encodeURIComponent(dependentError.message)}#edit-user-title`);
+  }
+
+  if ((dependentCount ?? 0) > 0) {
+    redirect(`/admin/users?edit=${encodeURIComponent(id)}&error=${encodeURIComponent("This primary account still has dependents. Remove or convert them before deleting the user.")}#edit-user-title`);
+  }
+
+  const { error } = await admin.auth.admin.deleteUser(profile.auth_user_id);
+  if (error) {
+    redirect(`/admin/users?edit=${encodeURIComponent(id)}&error=${encodeURIComponent(error.message)}#edit-user-title`);
+  }
+
+  revalidatePath("/admin/users");
+  revalidatePath("/");
+  redirect("/admin/users?saved=user-deleted");
+}
+
 export async function updateProfile(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");

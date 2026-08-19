@@ -106,6 +106,7 @@ The site manages Board Games with Rob events, including the Meeple in the Mounta
 - 2026-08-17: Added an optional admin-only manual password change field to the Edit User dialog for login accounts. Blank values preserve the existing password; entered passwords require at least six characters and are updated through Supabase Auth.
 - 2026-08-18: Added secure admin user impersonation from Admin Users. Admins can enter an attendee-facing view, make household changes such as shirt orders, and exit through a persistent banner without replacing the administrator's real login session. Password changes are disabled while impersonating.
 - 2026-08-18: Added Account type columns to the admin Attendee Shirt Choices and Order Report tables. Rows now identify primary accounts and dependents, including the dependent's primary account name when available.
+- 2026-08-18: Added guarded permanent deletion for login users in the Admin Users edit dialog. Deletion requires explicit confirmation, prevents administrators from deleting themselves, and blocks primary-account deletion while dependents remain.
 
 ## Open Questions
 - None blocking MVP implementation.

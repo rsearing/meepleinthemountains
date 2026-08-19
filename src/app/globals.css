@@ -762,10 +762,15 @@ th {
 }
 
 .dependent-edit-form,
-.conversion-form {
+.conversion-form,
+.delete-user-form {
   border-top: 1px solid var(--line);
   margin-top: 1rem;
   padding-top: 1rem;
+}
+
+.delete-user-form .button {
+  justify-self: start;
 }
 
 details.panel summary {

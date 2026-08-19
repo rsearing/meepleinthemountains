@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { convertDependentToAccount, deleteDependentAsAdmin, updateProfile } from "@/lib/actions/admin";
+import { convertDependentToAccount, deleteDependentAsAdmin, deleteUserAsAdmin, updateProfile } from "@/lib/actions/admin";
 import { startImpersonating } from "@/lib/actions/impersonation";
 import { fullName } from "@/lib/format";
 import type { Profile } from "@/lib/types";
@@ -226,7 +226,21 @@ export function AdminUserList({
                   <button className="button danger" type="submit">Remove dependent</button>
                 </form>
               </>
-            ) : null}
+            ) : (
+              <form className="form delete-user-form" action={deleteUserAsAdmin}>
+                <input type="hidden" name="id" value={selectedProfile.id} />
+                <h3>Delete User</h3>
+                <p className="muted">
+                  Permanently removes this login account and its event assignments, shirt orders, and game entries.
+                  Primary accounts with dependents cannot be deleted until those dependents are removed or converted.
+                </p>
+                <label className="checkbox-row">
+                  <input type="checkbox" name="confirm_delete" value="yes" required />
+                  I understand this user and their linked records will be permanently deleted.
+                </label>
+                <button className="button danger" type="submit">Delete user permanently</button>
+              </form>
+            )}
           </div>
           </div>
         </div>
